@@ -5,6 +5,7 @@ import (
 	"embed"
 	"github.com/go-mail/mail/v2"
 	"html/template"
+	"log"
 	"time"
 )
 
@@ -16,18 +17,18 @@ type Mailer struct {
 	sender string
 }
 
-func New(host string, port int, username, password, sender string) Mailer {
+func New(host string, port int, username, password, sender string) *Mailer {
 	dialer := mail.NewDialer(host, port, username, password)
 	dialer.Timeout = 5 * time.Second
 
-	return Mailer{
+	return &Mailer{
 		dialer: dialer,
 		sender: sender,
 	}
 }
 
-func (m Mailer) Send(recipient, templateFile string, data any) error {
-	tmpl, err := template.New(templateFile).ParseFS(templateFS, "templates/"+templateFile)
+func (m *Mailer) Send(recipient, templateFile string, data any) error {
+	tmpl, err := template.New("email").ParseFS(templateFS, "templates/"+templateFile)
 	if err != nil {
 		return nil
 	}
@@ -51,8 +52,8 @@ func (m Mailer) Send(recipient, templateFile string, data any) error {
 	}
 
 	msg := mail.NewMessage()
-	msg.SetHeader("To", recipient)
 	msg.SetHeader("From", m.sender)
+	msg.SetHeader("To", recipient)
 	msg.SetHeader("Subject", subject.String())
 	msg.SetBody("text/plain", plainBody.String())
 	msg.AddAlternative("text/html", htmlBody.String())
@@ -65,6 +66,8 @@ func (m Mailer) Send(recipient, templateFile string, data any) error {
 
 		time.Sleep(500 * time.Millisecond)
 	}
+
+	log.Print("email sent successfully!!!")
 
 	return nil
 }

@@ -2,16 +2,18 @@ package data
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 	"movie-api/internal/validators"
 	"time"
 )
 
 var (
 	ErrDuplicateEmail = errors.New("duplicate email")
+	ErrRecordNotFound = errors.New("the requested resource could not be found")
+	ErrEditConflict   = errors.New("got an error when trying to update")
 )
 
 type UserModel struct {
@@ -43,7 +45,6 @@ func (m UserModel) InsertUser(user *User) error {
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
 			return ErrDuplicateEmail
 		default:
-			log.Fatal("!!!!!!!!!!!!!!!!!!!!")
 			return err
 		}
 	}
@@ -89,7 +90,7 @@ func (m UserModel) UpdateUser(user *User) error {
 			RETURNING version`
 
 	args := []any{
-		user.Name, user.Email, user.Password, user.Activated, user.ID, user.Version,
+		user.Name, user.Email, user.Password.hash, user.Activated, user.ID, user.Version,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -164,4 +165,48 @@ func ValidateUser(v *validators.Validators, user *User) {
 	if user.Password.hash == nil {
 		panic("missing password hash for user")
 	}
+}
+
+// GetForToken retrieves user information by token activation
+func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error) {
+	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
+
+	query := `
+			SELECT users.ID, users.created_at, users.name, users.email, users.password_hash,  users.activated, users.version
+			FROM users
+			INNER JOIN tokens 
+			ON users.id = tokens.user_id
+			WHERE tokens.hash = $1
+			AND tokens.scope = $2
+			AND tokens.expiry > $3
+		`
+
+	args := []any{tokenHash[:], tokenScope, time.Now()}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var user User
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.ID,
+		&user.CreatedAt,
+		&user.Name,
+		&user.Email,
+		&user.Password.hash,
+		&user.Activated,
+		&user.Version,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, err
+		default:
+			return nil, err
+
+		}
+	}
+
+	return &user, nil
 }

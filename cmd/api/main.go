@@ -40,7 +40,7 @@ type application struct {
 	logger *jsonlog.Logger
 	config config
 	models data.Models
-	mailer mailer.Mailer
+	mailer *mailer.Mailer
 	wg     sync.WaitGroup
 }
 
@@ -56,10 +56,10 @@ func main() {
 	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
 
 	flag.StringVar(&cfg.smtp.host, "smtp-host", "sandbox.smtp.mailtrap.io", "SMTP host")
-	flag.IntVar(&cfg.smtp.port, "smtp-port", 2525, "SMTP port")
-	flag.StringVar(&cfg.smtp.username, "smtp-username", "d05e36924c8aab", "SMTP username")
-	flag.StringVar(&cfg.smtp.password, "smtp-password", "59dd3101038197", "SMTP password")
-	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "Greenlight <no-reply greemlight.team@email.com>", "SMTP sender")
+	flag.IntVar(&cfg.smtp.port, "smtp-port", 587, "SMTP port")
+	flag.StringVar(&cfg.smtp.username, "smtp-username", "bf56d873e43eb7", "SMTP username")
+	flag.StringVar(&cfg.smtp.password, "smtp-password", "fbe40984f0556d", "SMTP password")
+	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "greemlight.team@email.com", "SMTP sender")
 	flag.Parse()
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)

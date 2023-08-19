@@ -9,12 +9,14 @@ type Models struct {
 		UpdateMovie(movie *Movies) (*Movies, error)
 		GetAllMovies(title string, genres []string, filters Filters) ([]*Movies, Metadata, error)
 	}
-	Users UserModel
+	Tokens TokenModel
+	Users  UserModel
 }
 
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Movies: MovieModel{DB: db},
+		Tokens: TokenModel{DB: db},
 		Users:  UserModel{DB: db},
 	}
 }
