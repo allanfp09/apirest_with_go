@@ -36,3 +36,8 @@ func (app *application) editConflictResponse(w http.ResponseWriter) {
 func (app *application) badRequestResponse(w http.ResponseWriter) {
 	app.errorResponse(w, http.StatusBadRequest, "bad request error")
 }
+
+func (app *application) invalidCredentialsResponse(w http.ResponseWriter, r *http.Request) {
+	message := "invalid credentials for this resource"
+	app.errorResponse(w, http.StatusUnauthorized, message)
+}
