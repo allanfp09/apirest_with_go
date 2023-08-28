@@ -10,6 +10,7 @@ import (
 	"movie-api/internal/jsonlog"
 	"movie-api/internal/mailer"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -33,6 +34,9 @@ type config struct {
 		username string
 		password string
 		sender   string
+	}
+	cors struct {
+		trustedOrigins []string
 	}
 }
 
@@ -60,6 +64,11 @@ func main() {
 	flag.StringVar(&cfg.smtp.username, "smtp-username", "bf56d873e43eb7", "SMTP username")
 	flag.StringVar(&cfg.smtp.password, "smtp-password", "fbe40984f0556d", "SMTP password")
 	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "greemlight.team@email.com", "SMTP sender")
+
+	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(val string) error {
+		cfg.cors.trustedOrigins = strings.Fields(val)
+		return nil
+	})
 	flag.Parse()
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
